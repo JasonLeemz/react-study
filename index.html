@@ -27,7 +27,7 @@
                         <h2 className="commentAuthor">
                             { this.props.author }
                         </h2>
-                        <span dangerouslySetInnerHTML={{__html: rawMarkup}} />
+                        <span dangerouslySetInnerHTML={{__html: rawMarkup}}/>
                     </div>
             );
         }
@@ -36,9 +36,9 @@
     //评论列表
     let CommentList = React.createClass({
         render(){
-            let commentNodes = this.props.data.map((comment,index) => {
+            let commentNodes = this.props.data.map((comment, index) => {
                 return (
-                        <Comment author={comment.author} key={index} >
+                        <Comment author={comment.author} key={index}>
                             { comment.text }
                         </Comment>
                 )
@@ -54,10 +54,29 @@
 
     //评论表单
     let CommentForm = React.createClass({
+        submitHandler(e){
+            e.preventDefault();
+
+            let author = this.refs.author.getDOMNode().value.trim();
+            let text = this.refs.text.getDOMNode().value.trim();
+            if (!text || !author) {
+                return;
+            }
+//            alert(author + " " + text);
+            this.props.onSubmitComment(author, text);
+            this.refs.author.getDOMNode().value = '';
+            this.refs.text.getDOMNode().value = '';
+            return;
+        },
         render(){
             return (
                     <div className="commentForm">
-                        CommentForm !!
+                        <hr/>
+                        <form onSubmit={this.submitHandler}>
+                            <input type="text" placeholder="your name" ref="author"/>
+                            <input type="text" placeholder="say something ..." ref="text"/>
+                            <input type="submit" value="提交"/>
+                        </form>
                     </div>
             );
         }
@@ -65,25 +84,71 @@
 
     //评论组件
     let CommentBox = React.createClass({
+        getInitialState(){
+            return {
+                data: []
+            }
+        },
+        loadFunctionFromServer(){
+            $.ajax({
+                url: this.props.url,
+                dataType: 'json',
+                success: function (tData) {
+                    this.setState({
+                        data: tData
+                    });
+                }.bind(this),
+                error: function (xhr, status, err) {
+                    console.error(this.props.url, status, err.toString());
+                }.bind(this)
+            });
+        },
+        commentSubmitHandler(author, text){
+            //优化：直接显示
+            let tmpStateData = this.state.data;
+            tmpStateData.push({
+                author:author,
+                text:text
+            });
+            this.setState({
+                data: tmpStateData
+            });
+
+
+            $.ajax({
+                url: this.props.url,
+                dataType: 'json',
+                data:"author="+author+"&text="+text,
+                type:'post',
+                success: function (tData) {
+//                    this.setState({
+//                        data: tData
+//                    });
+                }.bind(this),
+                error: function (xhr, status, err) {
+                    console.error(this.props.url, status, err.toString());
+                }.bind(this)
+            });
+        },
+        componentDidMount(){
+            this.loadFunctionFromServer();
+            //2秒一次刷新
+//            setInterval(this.loadFunctionFromServer,this.props.pollInterval);
+        },
         render(){
             return (
                     <div className="commentBox">
                         <h1>Comments</h1>
-                        <CommentList data={ this.props.data } />
-                        <CommentForm />
+                        <CommentList data={ this.state.data }/>
+                        <CommentForm onSubmitComment={this.commentSubmitHandler}/>
                     </div>
             );
         }
     });
 
-    let data = [
-        {author: "Pete Hunt", text: "This is one comment"},
-        {author: "Jordan Walke", text: "This is *another* comment"}
-    ];
-
     // 实例化根组件，启动框架
     React.render(
-            <CommentBox data={data} />,
+            <CommentBox url="http://123.56.64.209:8005/test/test" pollInterval="2000"/>,
             document.getElementById('content')
     );
 </script>

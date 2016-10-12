@@ -1,0 +1,91 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Hello React</title>
+    <script type="text/javascript" src="build/react.js"></script>
+    <script type="text/javascript" src="build/JSXTransformer.js"></script>
+    <script type="text/javascript" src="build/jquery-1.10.0.min.js"></script>
+    <script type="text/javascript" src="build/showdown.min.js"></script>
+</head>
+<body>
+<div id="content"></div>
+<script type="text/jsx">
+    //        - 结构
+    //        - CommentBox
+    //          - CommentList
+    //              - Comment
+    //          - CommentForm
+
+    //评论内容
+    let converter = new Showdown.converter();
+    let Comment = React.createClass({
+        render(){
+            let rawMarkup = converter.makeHtml(this.props.children.toString())
+            return (
+                    <div className="comment">
+                        <h2 className="commentAuthor">
+                            { this.props.author }
+                        </h2>
+                        <span dangerouslySetInnerHTML={{__html: rawMarkup}} />
+                    </div>
+            );
+        }
+    });
+
+    //评论列表
+    let CommentList = React.createClass({
+        render(){
+            let commentNodes = this.props.data.map((comment,index) => {
+                return (
+                        <Comment author={comment.author} key={index} >
+                            { comment.text }
+                        </Comment>
+                )
+            });
+            return (
+                    <div className="commentList">
+                        { commentNodes }
+                    </div>
+            );
+        }
+    });
+
+
+    //评论表单
+    let CommentForm = React.createClass({
+        render(){
+            return (
+                    <div className="commentForm">
+                        CommentForm !!
+                    </div>
+            );
+        }
+    });
+
+    //评论组件
+    let CommentBox = React.createClass({
+        render(){
+            return (
+                    <div className="commentBox">
+                        <h1>Comments</h1>
+                        <CommentList data={ this.props.data } />
+                        <CommentForm />
+                    </div>
+            );
+        }
+    });
+
+    let data = [
+        {author: "Pete Hunt", text: "This is one comment"},
+        {author: "Jordan Walke", text: "This is *another* comment"}
+    ];
+
+    // 实例化根组件，启动框架
+    React.render(
+            <CommentBox data={data} />,
+            document.getElementById('content')
+    );
+</script>
+</body>
+</html>
